@@ -1,4 +1,5 @@
 require 'openssl'
+require 'net/http'
 require 'net/https'
 require 'uri'
 require 'json'
@@ -28,13 +29,23 @@ module Mintchip
       @p12 = OpenSSL::PKCS12.new(key, password)
     end
 
-    %w(id currencyCode balance creditLogCount debitLogCount creditLogCountRemaining debitLogCountRemaining maxCreditAllowed maxDebitAllowed version).each do |attr|
-      define_method(attr.underscore) { info[attr] }
-    end
-
     # GET /info/{responseformat}
     def info
-      JSON.parse get "/info/json"
+      @info ||= Info.new get "/info/json"
+    end
+
+    class Info
+      ATTRIBUTES = %w(id currencyCode balance creditLogCount debitLogCount) +
+        %w(creditLogCountRemaining debitLogCountRemaining maxCreditAllowed maxDebitAllowed version)
+
+      attr_reader *ATTRIBUTES.map(&:underscore).map(&:to_sym)
+
+      def initialize(str)
+        attrs = JSON.parse(str)
+        ATTRIBUTES.each do |attr|
+          instance_variable_set("@#{attr.underscore}", attrs[attr])
+        end
+      end
     end
 
     # POST /receipts
@@ -61,12 +72,26 @@ module Mintchip
 
     # GET /payments/{startindex}/{stopindex}/{responseformat}
     def debit_log(start, stop)
-      JSON.parse get "/payments/#{start}/#{stop}/json"
+      list = JSON.parse get "/payments/#{start}/#{stop}/json"
+      list.map{|item| TransactionLogEntry.new item}
     end
 
     # GET /receipts/{startindex}/{stopindex}/{responseformat}
     def credit_log(start, stop)
-      JSON.parse get "/receipts/#{start}/#{stop}/json"
+      list = JSON.parse get "/receipts/#{start}/#{stop}/json"
+      list.map{|item| TransactionLogEntry.new item}
+    end
+
+    class TransactionLogEntry
+      ATTRIBUTES = %w(amount challenge index logType payerId payeeId transactionTime currencyCode)
+
+      attr_reader *ATTRIBUTES.map(&:underscore).map(&:to_sym)
+
+      def initialize(attrs)
+        ATTRIBUTES.each do |attr|
+          instance_variable_set("@#{attr.underscore}", attrs[attr])
+        end
+      end
     end
 
     private
@@ -77,8 +102,8 @@ module Mintchip
       https.use_ssl     = true
       https.cert        = @p12.certificate
       https.key         = @p12.key
-      https.verify_mode = OpenSSL::SSL::VERIFY_NONE # TODO: Fix this.
-      # https.ca_file   = File.join(TestDataPath, 'cacert.pem')
+      https.ca_file     = File.expand_path("../../mintchip.pem", __FILE__)
+      https.verify_mode = OpenSSL::SSL::VERIFY_PEER
 
       https
     end
