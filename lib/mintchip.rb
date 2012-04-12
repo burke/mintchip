@@ -55,6 +55,59 @@ module Mintchip
       res == ""
     end
 
+    # converts an integer to binary coded decimal
+    def to_bcd(n)
+      str = n.to_s
+      bin = ""
+      str.each_char do |c|
+        bin << c.to_i.to_s(2).rjust(4,'0')
+      end
+      bin
+    end
+
+    # creates a base64 encoded value request message
+    def create_value_request(value, annotation_ = "", response_url_ = "")
+      # we need the currency code and MintChip ID so first we'll grab the info from the server
+      info = info()
+
+      message_version = OpenSSL::ASN1::Enumerated.new(1, 0, :EXPLICIT)
+
+      # annotation is optional
+      annotation = OpenSSL::ASN1::IA5String.new(annotation_, 1, :EXPLICIT)
+
+      # 64 bit bcd representation, padded with zeros, in ascii
+      payee_id_ = to_bcd(info.id).to_s.rjust(64, "0")
+      payee_id_ = [payee_id_].pack("B*")
+      # and encode it
+      payee_id = OpenSSL::ASN1::OctetString.new(payee_id_)
+      
+      currency_code = OpenSSL::ASN1::OctetString.new(info.currency_code.chr)
+
+      # bcd representation, padded with leading zeroes to 24 bits (3 bytes), in ascii 
+      transfer_value_ = to_bcd(value).to_s.rjust(24, "0")
+      transfer_value_ = [transfer_value_].pack("B*")
+      # and encode it
+      transfer_value = OpenSSL::ASN1::OctetString.new(transfer_value_)
+    
+      include_cert = OpenSSL::ASN1::Boolean.new(true)
+
+      # this part is optional also
+      response_url = OpenSSL::ASN1::IA5String(response_url_)
+  
+      random_challenge = OpenSSL::ASN1::OctetString.new(Random.new().bytes(4), 0, :IMPLICIT)
+
+      # now we create the 1-tagged ASN1Data inner packet containing a sequence
+      packet_ = OpenSSL::ASN1::Sequence.new( [ payee_id, currency_code, transfer_value, include_cert, response_url, random_challenge ], 1, :EXPLICIT )
+      # and finally the 2-tagged ASN1Data outer packet
+      packet = OpenSSL::ASN1::ASN1Data.new( [ packet_ ] , 2, :CONTEXT_SPECIFIC)
+
+      # and package all that in 0-tagged APPLICATION message
+      message = OpenSSL::ASN1::Sequence.new( [ message_version, annotation, packet ], 0, :EXPLICIT, :APPLICATION )
+
+      # DER encode it all and base64 it
+      vrm = Base64.strict_encode64(message.to_der)
+    end
+
     # POST /payments/request
     def create_value1(vrm)
       post "/payments/request", vrm, "application/vnd.scg.ecn-request"
