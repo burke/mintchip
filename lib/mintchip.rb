@@ -55,7 +55,7 @@ module Mintchip
       res == ""
     end
 
-    # converts an integer to binary coded decimal
+    # converts an integer to a binary coded decimal string
     def to_binary_coded_decimal(n)
       str = n.to_s
       bin = ""
@@ -72,6 +72,7 @@ module Mintchip
       res = [res].pack("B*")
     end
 
+    # wrapper for OpenSSL::ASN1::OctectString.new()
     def to_octet_string(value, tag = -1, tagging = :EXPLICIT)
       if tag == -1 then
         res = OpenSSL::ASN1::OctetString.new(value)
@@ -81,21 +82,21 @@ module Mintchip
       res
     end
 
-    def create_value_message_request_packet(value, response_url_ = "")
+    def create_value_message_request_packet(value, response_url = "")
       payee_id = to_octet_string(to_padded_ascii_binary_coded_decimal(info.id, 64))
-      currency_code = OpenSSL::ASN1::OctetString.new(info.currency_code.chr)
+      currency_code = to_octet_string(info.currency_code.chr)
       transfer_value = to_octet_string(to_padded_ascii_binary_coded_decimal(value, 24))
       include_cert = OpenSSL::ASN1::Boolean.new(true)
-      response_url = OpenSSL::ASN1::IA5String(response_url_)
+      response_url = OpenSSL::ASN1::IA5String(response_url)
       random_challenge = to_octet_string(Random.new().bytes(4), 0, :IMPLICIT)
       
-      packet_ = OpenSSL::ASN1::Sequence.new( [ payee_id, currency_code, transfer_value, include_cert, response_url, random_challenge ], 1, :EXPLICIT )
-      packet = OpenSSL::ASN1::ASN1Data.new( [ packet_ ] , 2, :CONTEXT_SPECIFIC)
+      packet = OpenSSL::ASN1::Sequence.new( [ payee_id, currency_code, transfer_value, include_cert, response_url, random_challenge ], 1, :EXPLICIT )
+      packet = OpenSSL::ASN1::ASN1Data.new( [ packet ] , 2, :CONTEXT_SPECIFIC)
     end
 
-    def create_mintchip_message(packet, annotation_ = "")
+    def create_mintchip_message(packet, annotation = "")
       message_version = OpenSSL::ASN1::Enumerated.new(1, 0, :EXPLICIT)
-      annotation = OpenSSL::ASN1::IA5String.new(annotation_, 1, :EXPLICIT)
+      annotation = OpenSSL::ASN1::IA5String.new(annotation, 1, :EXPLICIT)
       message = OpenSSL::ASN1::Sequence.new( [ message_version, annotation, packet ], 0, :EXPLICIT, :APPLICATION)
     end
 
