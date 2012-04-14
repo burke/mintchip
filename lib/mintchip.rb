@@ -113,7 +113,7 @@ module Mintchip
       bin
     end
 
-    # 64 bit bcd representation, padded with zeros, in ascii
+    # bcd representation, padded with zeros, in ascii
     def to_padded_ascii_binary_coded_decimal(value, length_in_bits, pad_character = '0')
       res = to_binary_coded_decimal(value).to_s
       res = res.rjust(length_in_bits, pad_character)
@@ -122,12 +122,7 @@ module Mintchip
 
     # wrapper for OpenSSL::ASN1::OctectString.new()
     def to_octet_string(value, tag = -1, tagging = :EXPLICIT)
-      if tag == -1 then
-        res = OpenSSL::ASN1::OctetString.new(value)
-      else
-          res = OpenSSL::ASN1::OctetString.new(value, tag, tagging)
-       end
-      res
+      ret = tag == -1 ? OpenSSL::ASN1::OctetString.new(value) : OpenSSL::ASN1::OctetString.new(value, tag, tagging)
     end
 
     def create_value_message_request_packet(value, response_url = "")
