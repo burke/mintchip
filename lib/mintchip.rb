@@ -55,6 +55,13 @@ module Mintchip
       res == ""
     end
 
+    # creates a base64 encoded value request message
+    def create_value_request(value, annotation_ = "", response_url_ = "")
+      packet = create_value_message_request_packet(value, response_url_)
+      message = create_mintchip_message(packet, annotation_)
+      encoded_value_request_message = Base64.strict_encode64(message.to_der)
+    end
+
     # POST /payments/request
     def create_value1(vrm)
       post "/payments/request", vrm, "application/vnd.scg.ecn-request"
@@ -95,6 +102,46 @@ module Mintchip
     end
 
     private
+
+    # converts an integer to a binary coded decimal string
+    def to_binary_coded_decimal(n)
+      str = n.to_s
+      bin = ""
+      str.each_char do |c|
+        bin << c.to_i.to_s(2).rjust(4,'0')
+      end
+      bin
+    end
+
+    # bcd representation, padded with zeros, in ascii
+    def to_padded_ascii_binary_coded_decimal(value, length_in_bits, pad_character = '0')
+      res = to_binary_coded_decimal(value).to_s
+      res = res.rjust(length_in_bits, pad_character)
+      res = [res].pack("B*")
+    end
+
+    # wrapper for OpenSSL::ASN1::OctectString.new()
+    def to_octet_string(value, tag = -1, tagging = :EXPLICIT)
+      ret = tag == -1 ? OpenSSL::ASN1::OctetString.new(value) : OpenSSL::ASN1::OctetString.new(value, tag, tagging)
+    end
+
+    def create_value_message_request_packet(value, response_url = "")
+      payee_id = to_octet_string(to_padded_ascii_binary_coded_decimal(info.id, 64))
+      currency_code = to_octet_string(info.currency_code.chr)
+      transfer_value = to_octet_string(to_padded_ascii_binary_coded_decimal(value, 24))
+      include_cert = OpenSSL::ASN1::Boolean.new(true)
+      response_url = OpenSSL::ASN1::IA5String(response_url)
+      random_challenge = to_octet_string(Random.new().bytes(4), 0, :IMPLICIT)
+      
+      packet = OpenSSL::ASN1::Sequence.new( [ payee_id, currency_code, transfer_value, include_cert, response_url, random_challenge ], 1, :EXPLICIT )
+      packet = OpenSSL::ASN1::ASN1Data.new( [ packet ] , 2, :CONTEXT_SPECIFIC)
+    end
+
+    def create_mintchip_message(packet, annotation = "")
+      message_version = OpenSSL::ASN1::Enumerated.new(1, 0, :EXPLICIT)
+      annotation = OpenSSL::ASN1::IA5String.new(annotation, 1, :EXPLICIT)
+      message = OpenSSL::ASN1::Sequence.new( [ message_version, annotation, packet ], 0, :EXPLICIT, :APPLICATION)
+    end
 
     def connection
       uri               = URI.parse RESOURCE_BASE
