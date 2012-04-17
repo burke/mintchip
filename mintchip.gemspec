@@ -14,4 +14,7 @@ Gem::Specification.new do |gem|
   gem.name          = "mintchip"
   gem.require_paths = ["lib"]
   gem.version       = Mintchip::VERSION
+
+  gem.add_dependency 'active_support'
+  gem.add_dependency 'json'
 end
