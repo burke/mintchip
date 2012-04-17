@@ -56,10 +56,6 @@ module Mintchip
       list.map{|item| TransactionLogEntry.new item}
     end
 
-    def create_value_request(value, annotation = "", response_url = "")
-      ValueRequestMessage.new(value, response_url, annotation, info).to_base64
-    end
-
     private
 
     def connection
