@@ -7,20 +7,20 @@ module Mintchip
       @annotation = annotation
     end
 
-    def packet
-      raise NotImplementedError
+    def to_base64
+      Base64.strict_encode64(message.to_der)
     end
 
     protected
 
-    def to_base64
-      Base64.strict_encode64(message.to_dar)
+    def packet
+      raise NotImplementedError
     end
 
-    def message(packet, annotation = "")
+    def message
       message_version = OpenSSL::ASN1::Enumerated.new(1, 0, :EXPLICIT)
       annotation = OpenSSL::ASN1::IA5String.new(annotation, 1, :EXPLICIT)
-      message = OpenSSL::ASN1::Sequence.new([message_version, annotation, packet], 0, :EXPLICIT, :APPLICATION)
+      message = OpenSSL::ASN1::Sequence.new([message_version, @annotation, packet], 0, :EXPLICIT, :APPLICATION)
     end
 
     def to_binary_coded_decimal(n)

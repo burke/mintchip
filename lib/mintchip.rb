@@ -1,5 +1,7 @@
 require 'mintchip/version'
 require 'mintchip/hosted'
+require 'mintchip/mintchip_message'
+require 'mintchip/value_request_message'
 
 module Mintchip
   CURRENCY_CODES = { CAD: 1 }

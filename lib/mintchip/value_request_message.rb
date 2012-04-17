@@ -1,5 +1,5 @@
 module Mintchip
-  class ValueRequestMessage < Mintchip::MintchipMessage
+  class ValueRequestMessage < MintchipMessage
 
     def initialize(value, response_url, annotation, info)
       super
@@ -42,7 +42,11 @@ module Mintchip
     end
 
     def random_challenge
-      to_octet_string(Random.new().bytes(4), 0, :IMPLICIT)
+      to_octet_string(random_bytes(4), 0, :IMPLICIT)
+    end
+
+    def random_bytes(n)
+      Random.new().bytes(n)
     end
 
   end

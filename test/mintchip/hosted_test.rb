@@ -1,10 +1,3 @@
-$LOAD_PATH.unshift File.expand_path('../../../lib', __FILE__)
-
-require 'mintchip'
-
-require 'minitest/autorun'
-require 'mocha'
-
 class Mintchip::HostedTest < MiniTest::Unit::TestCase
 
   # Testing web APIs is a pain in the ass. TODO!
