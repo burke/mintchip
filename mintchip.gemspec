@@ -4,8 +4,8 @@ require File.expand_path('../lib/mintchip/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Burke Libbey"]
   gem.email         = ["burke@burkelibbey.org"]
-  gem.description   = %q{Pre-Alpha: API for RCM MintChip}
-  gem.summary   = %q{Pre-Alpha: API for RCM MintChip.}
+  gem.description   = %q{Ruby API wrappers for MintChip}
+  gem.summary       = %q{Ruby API wrappers for MintChip.}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)

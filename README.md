@@ -1,6 +1,13 @@
 # Mintchip
 
-TODO: Write a gem description
+Mintchip is a gem wrapping as much mintchip-related functionality
+as possible.
+
+It includes a wrapper for the hosted API (`Mintchip::Hosted`), and
+a generator for ValueRequestMessages.
+
+The API is in flux and I haven't had a chance to write docs, so 
+browse the source for details. It's fairly friendly code.
 
 ## Installation
 
