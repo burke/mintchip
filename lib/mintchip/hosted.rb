@@ -64,7 +64,7 @@ module Mintchip
       https.use_ssl     = true
       https.cert        = @p12.certificate
       https.key         = @p12.key
-      https.ca_file     = File.expand_path("../../mintchip.pem", __FILE__)
+      https.ca_file     = File.expand_path("../../../mintchip.pem", __FILE__)
       https.verify_mode = OpenSSL::SSL::VERIFY_PEER
 
       https
