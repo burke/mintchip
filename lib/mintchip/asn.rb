@@ -28,7 +28,13 @@ module Mintchip
       end
       def ref(type, name, options = {})
         if term = Builder.terms[type]
-          puts "MMM #{type} : #{name}"
+          if options.any?
+            term = term.dup
+            options.each do |k, v|
+              term.send("#{k}=", v)
+            end
+          end
+          add_term term
         else
           raise ArgumentError, "Undefined term #{type}"
         end
@@ -45,10 +51,11 @@ module Mintchip
       end
     end
 
-    class Sequence < Struct.new(:name)
+    class Sequence < Struct.new(:name, :body, :tag, :tagging)
       include Builder
       def add_term(term)
-        puts "SSS " + term.inspect
+        self.body ||= []
+        self.body << term
       end
       def with_body(&block)
         instance_eval &block
@@ -56,10 +63,11 @@ module Mintchip
       end
     end
 
-    class Choice < Struct.new(:name, :tag, :tagging)
+    class Choice < Struct.new(:name, :tag, :tagging, :body)
       include Builder
       def add_term(term)
-        puts "CCC " + term.inspect
+        self.body ||= []
+        self.body << term
       end
       def with_body(&block)
         instance_eval &block
@@ -70,7 +78,7 @@ module Mintchip
     class Enumerated < Struct.new(:name, :choices, :tag, :tagging)
     end
 
-    class OctetString < Struct.new(:name, :size)
+    class OctetString < Struct.new(:name, :size, :tag, :tagging)
     end
 
     class Boolean < Struct.new(:name)
