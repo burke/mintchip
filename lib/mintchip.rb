@@ -4,7 +4,7 @@ require 'mintchip/mintchip_message'
 require 'mintchip/value_request_message'
 
 module Mintchip
-  CURRENCY_CODES = { CAD: 1 }
+  CURRENCY_CODES = { :CAD => 1 }
 
   def self.currency_code(name)
     CURRENCY_CODES[name.to_sym] or raise InvalidCurrency
